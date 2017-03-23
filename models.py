@@ -47,7 +47,7 @@ class User(BaseModel):
 
 class Project(BaseModel):
     name = pw.CharField(max_length=100)
-    color = pw.CharField(length=7)
+    color = pw.CharField(max_length=7)
     user = pw.ForeignKeyField(User, related_name="projects")
 
     def get_id(self):
@@ -63,9 +63,4 @@ class Task(BaseModel):
 
     def get_id(self):
         return self.id
-
-
-
-
-
 

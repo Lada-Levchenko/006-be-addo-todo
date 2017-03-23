@@ -8,3 +8,6 @@ gen
 
 env/
 
+__pycache__/
+blueprints/__pycache__/
+database.db

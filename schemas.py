@@ -10,7 +10,7 @@ class UserSchema(ModelSchema):
     password = fields.Str(validate=[validate.Length(min=3, max=30)])
 
     class Meta:
-        model = Project
+        model = User
 
 
 class ProjectSchema(ModelSchema):
