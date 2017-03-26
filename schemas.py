@@ -2,7 +2,6 @@ from marshmallow import ValidationError
 from marshmallow import fields, validate, validates
 from marshmallow_peewee import ModelSchema
 from models import User, Project, Task
-from marshmallow_peewee import Related
 
 
 class UserSchema(ModelSchema):
@@ -16,7 +15,7 @@ class UserSchema(ModelSchema):
 class ProjectSchema(ModelSchema):
     name = fields.Str(validate=[validate.Length(min=3, max=100)])
     color = fields.Str(validate=[validate.Length(equal=7)])
-    user = Related(UserSchema)
+    user = fields.Int()
 
     class Meta:
         model = Project
@@ -31,7 +30,7 @@ class TaskSchema(ModelSchema):
     name = fields.Str(validate=[validate.Length(min=3, max=100)])
     date = fields.Date()
     priority = fields.Int(validate=[validate.Range(min=1, max=3)])
-    project = Related(ProjectSchema)
+    project = fields.Int()
 
     class Meta:
         model = Task

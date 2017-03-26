@@ -11,14 +11,12 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 app.secret_key = 'super secret key'
-app.register_blueprint(crud_user, url_prefix="/api/users")
-app.register_blueprint(crud_project, url_prefix="/api/projects")
-app.register_blueprint(crud_task, url_prefix="/api/tasks")
-CORS(app=app)
-initialize()
-
+app.register_blueprint(crud_user, url_prefix="/api/user")
+app.register_blueprint(crud_project, url_prefix="/api/project")
+app.register_blueprint(crud_task, url_prefix="/api/task")
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+CORS(app=app)
 
 
 @app.before_request
@@ -39,35 +37,43 @@ def login():
     registered_user = User.filter(User.username == username).first()
 
     if registered_user is None:
-        return 404
+        return jsonify({}), 404
 
     if not registered_user.password.check_password(password):
-        return 401
+        return jsonify({}), 401
 
     login_user(registered_user)
-    return 202
+    app.register_blueprint(crud_user, url_prefix="/api/users")
+    app.register_blueprint(crud_project, url_prefix="/api/projects")
+    app.register_blueprint(crud_task, url_prefix="/api/tasks")
+    return jsonify({}), 202
 
 
 @app.route('/logout')
 def logout():
     logout_user()
-    return 401
+    app.blueprints.clear()
+    return jsonify({}), 401
 
 
-@app.route('/api/users/<int:id>/projects', methods=["GET"])
+@app.route('/api/projects', methods=["GET"])
 @login_required
-def get_projects_of_user(id):
-    projects = list(Project.select().join(User).where(User.id == id))
+def get_projects_of_user():
+    projects = list(Project.select().join(User).where(User.id == g.user.get_id()))
     return jsonify(project_schema.dump(projects, many=True)), 200
 
 
-
-@app.route('/api/users/<int:uid>/projects/<int:pid>/tasks', methods=["GET"])
+@app.route('/api/tasks', methods=["GET"])
 @login_required
-def get_tasks_of_project(uid, pid):
-
-    tasks = list(Task.select().join(Project).where(Project.id == pid))
-    return jsonify(task_schema.dump(tasks, many=True)), 200
+def get_tasks_of_project():
+    id = request.args.get('project_id')
+    if request.args.get('project_id'):
+        project = Project.select().where(Project.id == id)
+        if project.exists():
+            if project.join(User).where(User.id == g.user.get_id()).exists():
+                tasks = list(Task.select().join(Project).where(Project.id == id))
+                return jsonify(task_schema.dump(tasks, many=True)), 200
+    return jsonify({}), 404
 
 if __name__ == '__main__':
     initialize()
