@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, g
-from flask_login import login_required
+from flask_jwt import jwt_required
 
 from schemas import user_schema
 from models import User
@@ -20,7 +20,7 @@ def create():
 
 
 @crud_user.route('', methods=["GET"])
-@login_required
+@jwt_required()
 def read_one():
     try:
         user = User.get(id=g.user.get_id())
@@ -30,7 +30,7 @@ def read_one():
 
 
 @crud_user.route('', methods=["PUT"])
-@login_required
+@jwt_required()
 def update():
     try:
         user = User.get(id=g.user.get_id())
@@ -48,7 +48,7 @@ def update():
 
 
 @crud_user.route('', methods=["DELETE"])
-@login_required
+@jwt_required()
 def delete():
     User.delete().where(User.id == g.user.get_id()).execute()
     return jsonify({}), 204
