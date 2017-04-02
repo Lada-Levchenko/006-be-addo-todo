@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, g
-from flask_login import login_required
+from flask_jwt import jwt_required
 from schemas import task_schema
 from models import Task
 
@@ -7,7 +7,7 @@ crud_task = Blueprint('crud_task', __name__)
 
 
 @crud_task.route('', methods=["POST"])
-@login_required
+@jwt_required()
 def create():
     task, errors = task_schema.load(request.json)
 
@@ -20,7 +20,7 @@ def create():
 
 
 @crud_task.route('/<int:id>', methods=["GET"])
-@login_required
+@jwt_required()
 def read_one(id):
     try:
         task = Task.get(id=id)
@@ -30,7 +30,7 @@ def read_one(id):
 
 
 @crud_task.route('/<int:id>', methods=["PUT"])
-@login_required
+@jwt_required()
 def update(id):
     try:
         task = Task.get(id=id)
@@ -48,7 +48,7 @@ def update(id):
 
 
 @crud_task.route('/<int:id>', methods=["DELETE"])
-@login_required
+@jwt_required()
 def delete(id):
     is_task_exists = Task.select().filter(id=id).exists()
 

@@ -1,6 +1,8 @@
 from marshmallow import ValidationError
 from marshmallow import fields, validate, validates
 from marshmallow_peewee import ModelSchema
+from marshmallow_peewee import Related
+
 from models import User, Project, Task
 
 
@@ -21,7 +23,7 @@ class ProjectSchema(ModelSchema):
         model = Project
 
     @validates('user')
-    def validate_book(self, user):
+    def validate_user(self, user):
         if not User.filter(User.id == user).exists():
             raise ValidationError("Can't find user")
 
@@ -30,13 +32,13 @@ class TaskSchema(ModelSchema):
     name = fields.Str(validate=[validate.Length(min=3, max=100)])
     date = fields.Date()
     priority = fields.Int(validate=[validate.Range(min=1, max=3)])
-    project = fields.Int()
+    project = Related()
 
     class Meta:
         model = Task
 
     @validates('project')
-    def validate_book(self, project):
+    def validate_project(self, project):
         if not Project.filter(Project.id == project).exists():
             raise ValidationError("Can't find project")
 

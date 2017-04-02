@@ -1,5 +1,7 @@
+import datetime
+
 from flask import Flask, request, jsonify, g
-from flask_login import LoginManager, logout_user
+from flask_login import logout_user
 
 from models import User, Project, Task, initialize
 from schemas import user_schema, project_schema, task_schema
@@ -15,8 +17,6 @@ app.secret_key = 'super secret key'
 app.register_blueprint(crud_user, url_prefix="/api/user")
 app.register_blueprint(crud_project, url_prefix="/api/project")
 app.register_blueprint(crud_task, url_prefix="/api/task")
-login_manager = LoginManager(app)
-login_manager.login_view = 'login'
 app.config['JWT_AUTH_URL_RULE'] = '/authenticate'
 CORS(app=app)
 
@@ -61,12 +61,26 @@ def get_projects_of_user():
 @jwt_required()
 def get_tasks_of_project():
     id = request.args.get('project_id')
-    if request.args.get('project_id'):
-        project = Project.select().where(Project.id == id)
-        if project.exists():
-            if project.join(User).where(User.id == g.user.get_id()).exists():
-                tasks = list(Task.select().join(Project).where(Project.id == id))
-                return jsonify(task_schema.dump(tasks, many=True)[0]), 200
+    if id is not None:
+        project = g.user.projects.filter(Project.id == id).first()
+        if project is None:
+            return jsonify({}), 404
+        tasks = list(project.tasks)
+        return jsonify(task_schema.dump(tasks, many=True)[0]), 200
+    return jsonify({}), 404
+
+
+@app.route('/api/tasks/dates', methods=["GET"])
+@jwt_required()
+def get_tasks_for_dates():
+    start_date = datetime.datetime.strptime(request.args.get('start_date'), "%Y-%m-%d").date()
+    end_date = datetime.datetime.strptime(request.args.get('end_date'), "%Y-%m-%d").date()
+    projects = g.user.projects
+    tasks = []
+    for project in projects:
+        tasks.extend(project.tasks.filter(Task.date.between(start_date, end_date)))
+    if tasks is not None:
+        return jsonify(task_schema.dump(tasks, many=True)[0]), 200
     return jsonify({}), 404
 
 if __name__ == '__main__':

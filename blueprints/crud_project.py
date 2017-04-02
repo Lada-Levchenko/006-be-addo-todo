@@ -1,4 +1,5 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, g
+from flask_jwt import jwt_required
 from schemas import project_schema
 from models import Project
 
@@ -6,12 +7,14 @@ crud_project = Blueprint('crud_project', __name__)
 
 
 @crud_project.route('', methods=["POST"])
+@jwt_required()
 def create():
     project, errors = project_schema.load(request.json)
 
     if errors:
         return jsonify(errors), 400
 
+    project.user = g.user.get_id()
     project.save()
 
     return jsonify(project_schema.dump(project).data), 201
